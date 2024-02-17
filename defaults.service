@@ -1,12 +1,12 @@
 [Unit]
-Description=configure defaults for jack and jacktrip services
+Description=configure defaults for jack service
 
 [Service]
 Type=oneshot
 User=root
 Group=root
 ExecStart=/usr/sbin/defaults.sh
-PassEnvironment=SAMPLE_RATE BUFFER_SIZE JACK_OPTS JACKTRIP_OPTS
+PassEnvironment=SAMPLE_RATE BUFFER_SIZE JACK_OPTS
 RemainAfterExit=true
 Restart=on-failure
 RestartSec=5
@@ -15,4 +15,4 @@ StandardError=inherit
 SyslogIdentifier=defaults
 
 [Install]
-WantedBy=multi-user.target jack.service jacktrip.service
+WantedBy=multi-user.target jack.service
