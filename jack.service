@@ -5,7 +5,7 @@ Wants=defaults.service
 
 [Service]
 Type=simple
-User=jacktrip
+User=jack
 Group=audio
 NoNewPrivileges=true
 ProtectSystem=true
