@@ -7,9 +7,6 @@ on:
   release:
     types: [published]
 
-env:
-  REGISTRY_IMAGE: jacktrip/jack
-
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -21,17 +18,17 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            ${REGISTRY_NAME}
+          images:
+            jacktrip/jack
           tags: |
             type=edge,branch=main
-            type=sha,event=tag,prefix={{version}}-
-            type=semver,event=tag,pattern={{version}}
-            type=semver,event=tag,pattern={{major}}.{{minor}}
-        labels: |
-          org.opencontainers.image.title=Jack Audio Connection Kit
-          org.opencontainers.image.description=Run a Jack Audio Connection Kit server in a container
-          org.opencontainers.image.vendor=JackTrip Labs, Inc.
+            type=match,pattern=v(\d+.\d+)..*,group=1
+            type=match,pattern=v(\d+.\d+.\d+).*,group=1
+            type=match,pattern=v(\d+.\d+.\d+-.*),group=1,priority=1000
+          labels: |
+            org.opencontainers.image.title=Jack Audio Connection Kit
+            org.opencontainers.image.description=Run a Jack Audio Connection Kit server in a container
+            org.opencontainers.image.vendor=JackTrip Labs, Inc.
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
