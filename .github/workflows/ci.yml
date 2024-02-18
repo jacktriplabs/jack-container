@@ -16,6 +16,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${REGISTRY_NAME}
+          tags: |
+            type=edge,branch=main
+            type=sha,event=tag,prefix={{version}}-
+            type=semver,event=tag,pattern={{version}}
+            type=semver,event=tag,pattern={{major}}.{{minor}}
+        labels: |
+          org.opencontainers.image.title=Jack Audio Connection Kit
+          org.opencontainers.image.description=Run a Jack Audio Connection Kit server in a container
+          org.opencontainers.image.vendor=JackTrip Labs, Inc.
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -27,23 +43,13 @@ jobs:
           version: "lab:latest"
           driver: cloud
           endpoint: "jacktrip/test"
-      - name: Build and push latest
+      - name: Build and push image
         uses: docker/build-push-action@v5
-        if: (!startsWith(github.ref, 'refs/tags/'))
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY_IMAGE }}:latest
-          # For pull requests, export results to the build cache.
-          # Otherwise, push to a registry.
-          outputs: ${{ github.event_name == 'pull_request' && 'type=cacheonly' || 'type=registry,push=true' }}
-      - name: Build and push release
-        uses: docker/build-push-action@v5
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           # For pull requests, export results to the build cache.
           # Otherwise, push to a registry.
           outputs: ${{ github.event_name == 'pull_request' && 'type=cacheonly' || 'type=registry,push=true' }}
