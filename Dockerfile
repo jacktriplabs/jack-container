@@ -67,5 +67,7 @@ RUN echo "JACK_PROMISCUOUS_SERVER=audio" >> /etc/environment \
 	&& useradd -r -m -N -G audio -s /usr/sbin/nologin jack \
 	&& chown -R jack.audio /home/jack \
 	&& chmod g+rwx /home/jack \
+	&& usermod -G audio root \
+	&& echo "export JACK_PROMISCUOUS_SERVER=audio" > /etc/profile.d/jack.sh \
 	&& ln -s /etc/systemd/system/jack.service /etc/systemd/system/multi-user.target.wants \
 	&& ln -s /etc/systemd/system/defaults.service /etc/systemd/system/multi-user.target.wants
