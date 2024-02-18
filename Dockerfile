@@ -5,11 +5,15 @@
 # See https://jackaudio.org/
 # To build this: "podman build -t jack ."
 
+# container image versions
+ARG FEDORA_VERSION=34
+ARG REDHAT_UBI_VERSION=9.3
+
 # temporary container used to build jack
-FROM registry.fedoraproject.org/fedora:34 AS builder
+FROM registry.fedoraproject.org/fedora:${FEDORA_VERSION} AS builder
 
 # these can be any tag or commit in the repositories
-ARG JACK_VERSION=v1.9.22
+ARG JACK_VERSION=1.9.22
 
 # we will patch jack with these to allow for greater scalability
 ARG JACK_CLIENTS=128
@@ -23,7 +27,7 @@ RUN dnf install -y --nodocs gcc gcc-c++ git meson python3-pyyaml python3-jinja2
 
 # download and install jack
 RUN cd /root \
-    && git clone ${JACK_REPO} --branch ${JACK_VERSION} --depth 1 --recurse-submodules --shallow-submodules \
+    && git clone ${JACK_REPO} --branch v${JACK_VERSION} --depth 1 --recurse-submodules --shallow-submodules \
     && cd jack2 \
     && sed -i 's/#define CLIENT_NUM 64/#define CLIENT_NUM ${JACK_CLIENTS}/' ./common/JackConstants.h \
     && sed -i 's/#define MAX_SHM_ID 256/#define MAX_SHM_ID 1024/' ./common/shm.h \
@@ -40,7 +44,7 @@ RUN cd /root \
     && meson install -C builddir
 
 # build the final container
-FROM registry.access.redhat.com/ubi9/ubi-init:9.3
+FROM registry.access.redhat.com/ubi9/ubi-init:${REDHAT_UBI_VERSION}
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
@@ -53,7 +57,7 @@ COPY audio.conf /etc/security/limits.d/
 COPY jack.service defaults.service /etc/systemd/system/
 
 # copy the artifacts we built into the final container image
-COPY --from=builder /usr/local/bin/jackd /usr/local/bin/jack_wait /usr/local/bin/
+COPY --from=builder /usr/local/bin/jackd /usr/local/bin/jack_* /usr/local/bin/
 COPY --from=builder /usr/local/lib/libjack.so.0 /usr/local/lib/libjackserver.so.0 /lib64/
 COPY --from=builder /usr/local/lib/jack/* /usr/local/lib/jack/
 

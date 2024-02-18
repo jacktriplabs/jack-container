@@ -10,6 +10,10 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    env:
+      JACK_VERSION: 1.9.22
+      REDHAT_UBI_VERSION: 9.3-10
+      REGISTRY_IMAGE: jacktrip/jack
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,8 +22,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images:
-            jacktrip/jack
+          images: ${{ env.REGISTRY_IMAGE }}
           tags: |
             type=edge,branch=main
             type=match,pattern=v(\d+.\d+)..*,group=1
@@ -45,6 +48,9 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            JACK_VERSION=${{ env.JACK_VERSION }}
+            REDHAT_UBI_VERSION=${{ env.REDHAT_UBI_VERSION }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # For pull requests, export results to the build cache.
