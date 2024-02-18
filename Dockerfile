@@ -19,13 +19,12 @@ ARG JACK_REPO=https://github.com/jackaudio/jack2.git
 ARG JACK_TOOLS_REPO=https://github.com/jackaudio/jack-example-tools.git
 
 # install tools required to build jack
-RUN dnf install -y --nodocs gcc gcc-c++ \
-	git meson python3-pyyaml python3-jinja2
+RUN dnf install -y --nodocs gcc gcc-c++ git meson python3-pyyaml python3-jinja2
 
 # download and install jack
 RUN cd /root \
-	&& git clone ${JACK_REPO} --branch ${JACK_VERSION} --depth 1 --recurse-submodules --shallow-submodules \
-	&& cd jack2 \
+    && git clone ${JACK_REPO} --branch ${JACK_VERSION} --depth 1 --recurse-submodules --shallow-submodules \
+    && cd jack2 \
     && sed -i 's/#define CLIENT_NUM 64/#define CLIENT_NUM ${JACK_CLIENTS}/' ./common/JackConstants.h \
     && sed -i 's/#define MAX_SHM_ID 256/#define MAX_SHM_ID 1024/' ./common/shm.h \
     && ./waf configure --clients=${JACK_CLIENTS} \
@@ -34,16 +33,19 @@ RUN cd /root \
 
 # download and install jack example tools
 RUN cd /root \
-	&& git clone ${JACK_TOOLS_REPO} --depth 1 --recurse-submodules --shallow-submodules \
-	&& cd jack-example-tools \
+    && git clone ${JACK_TOOLS_REPO} --depth 1 --recurse-submodules --shallow-submodules \
+    && cd jack-example-tools \
     && PKG_CONFIG_PATH=/usr/local/lib/pkgconfig meson setup -Ddefault_library=static --buildtype release builddir \
-	&& meson compile -C builddir \
-	&& meson install -C builddir
+    && meson compile -C builddir \
+    && meson install -C builddir
 
 # build the final container
 FROM registry.access.redhat.com/ubi9/ubi-init:9.3
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
+
+# security patch for CVE-2022-40897
+RUN dnf remove -y python3-setuptools
 
 # install a few service and config files
 COPY --chmod=0755 defaults.sh /usr/sbin/defaults.sh
