@@ -7,7 +7,7 @@
 
 # container image versions
 ARG FEDORA_VERSION=34
-ARG REDHAT_UBI_VERSION=9.3
+ARG REDHAT_UBI_VERSION=9.4
 
 # -------------
 # STAGE BUILDER

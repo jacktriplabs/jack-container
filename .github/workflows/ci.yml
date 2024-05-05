@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       JACK_VERSION: 1.9.22
-      REDHAT_UBI_VERSION: 9.3-10
+      REDHAT_UBI_VERSION: 9.4-6
       REGISTRY_IMAGE: jacktrip/jack
     steps:
       - name: Checkout
