@@ -3,11 +3,13 @@
 # Copyright (c) 2023-2024. MIT License.
 #
 # See https://jackaudio.org/
+# See https://support.jacktrip.com/building-jack-for-virtual-studio-servers
+#
 # To build this: "podman build -t jack ."
 
 # container image versions
 ARG FEDORA_VERSION=34
-ARG REDHAT_UBI_VERSION=9.4
+ARG REDHAT_UBI_VERSION=9.6
 
 # -------------
 # STAGE BUILDER
@@ -23,7 +25,7 @@ ARG JACK_REPO=https://github.com/jackaudio/jack2.git
 ARG JACK_TOOLS_REPO=https://github.com/jackaudio/jack-example-tools.git
 
 # we will patch jack with these to allow for greater scalability
-ARG JACK_CLIENTS=128
+ARG JACK_CLIENTS=1024
 
 # these can be any tag or commit in the repositories
 ARG JACK_VERSION=1.9.22
@@ -32,6 +34,8 @@ ARG JACK_VERSION=1.9.22
 RUN cd /root \
     && git clone ${JACK_REPO} --branch v${JACK_VERSION} --depth 1 --recurse-submodules --shallow-submodules \
     && cd jack2 \
+    && sed -i 's/#define PORT_NUM 2048/#define PORT_NUM 8192/' ./common/JackConstants.h \
+    && sed -i 's/#define PORT_NUM_MAX 4096/#define PORT_NUM_MAX 8192/' ./common/JackConstants.h \
     && sed -i 's/#define CLIENT_NUM 64/#define CLIENT_NUM ${JACK_CLIENTS}/' ./common/JackConstants.h \
     && sed -i 's/#define MAX_SHM_ID 256/#define MAX_SHM_ID 1024/' ./common/shm.h \
     && ./waf configure --clients=${JACK_CLIENTS} \
@@ -55,7 +59,14 @@ RUN mkdir -p ${INSTALLDIR}/usr/local/bin/ ${INSTALLDIR}/usr/lib64/ ${INSTALLDIR}
 COPY --chmod=0755 defaults.sh ${INSTALLDIR}/usr/sbin/defaults.sh
 COPY audio.conf ${INSTALLDIR}/etc/security/limits.d/
 COPY jack.service defaults.service ${INSTALLDIR}/etc/systemd/system/
+RUN cd ${INSTALLDIR} && tar -czf /jackd.tar.gz *
 
+# --------------
+# STAGE ARTIFACT
+# --------------
+# for just building and extracting the jackd build artifacts
+FROM scratch AS artifact
+COPY --from=builder /jackd.tar.gz /
 
 # ------------------
 # STAGE JACK (FINAL)
