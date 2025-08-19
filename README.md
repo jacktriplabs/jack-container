@@ -19,10 +19,10 @@ podman build -t jacktrip/jack .
 To run a Jack container using `podman`:
 
 ```bash
-podman run --name jack --shm-size=128M -d jacktrip/jack
+podman run --name jack --shm-size=384M -d jacktrip/jack
 ```
 
-`jackd` requires the ability to lock about 128MB of shared memory, and
+`jackd` requires the ability to lock about 384MB of shared memory, and
 will try to run realtime priority threads. Be sure that your memory
 limits (`ulimit`) are set appropriately.
 
@@ -34,7 +34,7 @@ ulimit -r 10
 If using `docker`, you will need to run this as a privileged container:
 
 ```bash
-docker run --name jack --shm-size=128M --privileged -d jacktrip/jack
+docker run --name jack --shm-size=384M --privileged -d jacktrip/jack
 ```
 
 By default, the servers will run using a sample rate of 48Khz and buffer
