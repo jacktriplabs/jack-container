@@ -5,11 +5,11 @@
 # See https://jackaudio.org/
 # See https://support.jacktrip.com/building-jack-for-virtual-studio-servers
 #
-# To build this: "podman build -t jack ."
+# To build this: "podman build -t jacktrip/jack ."
 
 # container image versions
 ARG FEDORA_VERSION=34
-ARG REDHAT_UBI_VERSION=9.6
+ARG REDHAT_UBI_VERSION=10.1
 
 # -------------
 # STAGE BUILDER
@@ -72,13 +72,12 @@ COPY --from=builder /jackd.tar.gz /
 # STAGE JACK (FINAL)
 # ------------------
 # build the final container
-FROM registry.access.redhat.com/ubi9/ubi-init:${REDHAT_UBI_VERSION}
+FROM docker.io/redhat/ubi10-init:${REDHAT_UBI_VERSION}
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
 # add JACK_PROMISCUOUS_SERVER to allow other users to access jackd - groups don't actually work so using the environment variable
 # see: http://manpages.ubuntu.com/manpages/bionic/man1/jackd.1.html
-# remove python3-setuptools: security patch for CVE-2022-40897
 RUN echo "JACK_PROMISCUOUS_SERVER=audio" >> /etc/environment \
 	&& useradd -r -m -N -G audio -s /usr/sbin/nologin jack \
 	&& chown -R jack.audio /home/jack \
@@ -86,8 +85,7 @@ RUN echo "JACK_PROMISCUOUS_SERVER=audio" >> /etc/environment \
 	&& usermod -G audio root \
 	&& echo "export JACK_PROMISCUOUS_SERVER=audio" > /etc/profile.d/jack.sh \
 	&& ln -s /etc/systemd/system/jack.service /etc/systemd/system/multi-user.target.wants \
-	&& ln -s /etc/systemd/system/defaults.service /etc/systemd/system/multi-user.target.wants \
-    && dnf remove -y python3-setuptools
+	&& ln -s /etc/systemd/system/defaults.service /etc/systemd/system/multi-user.target.wants
 
 # copy the artifacts we built into the final container image
 COPY --from=builder /opt /
